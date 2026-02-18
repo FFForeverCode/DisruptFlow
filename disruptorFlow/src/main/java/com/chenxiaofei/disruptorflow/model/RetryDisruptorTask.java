@@ -53,7 +53,7 @@ public class RetryDisruptorTask implements Serializable {
     /**
      * 版本号
      */
-    private String version;
+    private Integer version;
 
     /**
      * created

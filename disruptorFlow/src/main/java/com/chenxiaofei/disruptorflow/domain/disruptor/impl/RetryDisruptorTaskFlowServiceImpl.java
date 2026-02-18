@@ -42,6 +42,7 @@ public class RetryDisruptorTaskFlowServiceImpl implements RetryDisruptorTaskFlow
             log.warn("任务列表为空,无需推送");
             return;
         }
+        //持久化消息体
         int count = retryDisruptorTaskRepository.insertBatch(retryDisruptorTasks);
         if(count <= 0){
             log.info("插入任务失败 com.chenxiaofei.disruptorflow.domain.disruptor.impl.RetryDisruptorTaskFlowServiceImpl.pushDisruptorFlow " +
