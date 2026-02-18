@@ -2,8 +2,10 @@ package com.chenxiaofei.disruptorflow.domain.disruptor.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.chenxiaofei.disruptorflow.domain.erp.ErpService;
+import com.chenxiaofei.disruptorflow.domain.processors.TaskProcessor;
 import com.chenxiaofei.disruptorflow.model.RetryDisruptorTask;
 import com.chenxiaofei.disruptorflow.model.RetryDisruptorTaskEvent;
+import com.chenxiaofei.disruptorflow.model.enums.RetryDisruptorTaskEnum;
 import com.chenxiaofei.disruptorflow.model.enums.TaskStateEnum;
 import com.chenxiaofei.disruptorflow.repository.mapper.RetryDisruptorTaskMapper;
 import com.chenxiaofei.disruptorflow.support.utils.UserContext;
@@ -28,7 +30,7 @@ import java.util.Objects;
 @Service
 public class RetryTaskEventWorkerHandler  implements WorkHandler<RetryDisruptorTaskEvent>, ApplicationContextAware {
 
-    private ApplicationContextAware applicationContextAware;
+    private ApplicationContext applicationContext;
 
 
     @Resource
@@ -91,8 +93,13 @@ public class RetryTaskEventWorkerHandler  implements WorkHandler<RetryDisruptorT
 
     }
 
+    /**
+     * 检查是否达到最大重试次数
+     * @param retryDisruptorTask
+     * @return
+     */
     private boolean isOverFailedCountLimit(RetryDisruptorTask retryDisruptorTask) {
-
+        return retryDisruptorTask.getFailCount() >= failedCountLimit;
     }
 
     /**
@@ -100,12 +107,50 @@ public class RetryTaskEventWorkerHandler  implements WorkHandler<RetryDisruptorT
      * @param retryDisruptorTask retryDisruptorTask
      */
     private void execute(RetryDisruptorTask retryDisruptorTask) {
+        //获取对应的processors执行
+        String handleProcessor = retryDisruptorTask.getHandleProcessor();
+        RetryDisruptorTaskEnum retryDisruptorTaskEnum = RetryDisruptorTaskEnum.valueOf(handleProcessor);
+        String processorName = retryDisruptorTaskEnum.getBeanName();
+        TaskProcessor processor = (TaskProcessor) applicationContext.getBean(processorName);
+        if(Objects.isNull(processor)){
+            log.error("processor is null,not expected;processor不存在，processorName={}",processorName);
+            throw new RuntimeException("processor is null,not expected;processor不存在，" +
+                    "processorName:" +processorName);
+        }
+        try{
+            boolean result = processor.execute(retryDisruptorTask);
+            if(result){
+                log.info("task process successfully");
+                int count = retryDisruptorTaskMapper.updateToFinished(
+                        retryDisruptorTask.getId(),
+                        retryDisruptorTask.getVersion()
+                );
+            }else{
+                log.info("task process failed");
+                int count = retryDisruptorTaskMapper.incrementFailedCount(
+                        retryDisruptorTask.getId(),
+                        "任务执行失败，请检查，task=" + JSON.toJSONString(retryDisruptorTask),
+                        retryDisruptorTask.getVersion()
+                );
+                throw new RuntimeException("com.chenxiaofei.disruptorflow.domain.disruptor.impl" +
+                        ".RetryTaskEventWorkerHandler.execute retryTask failed");
+            }
 
+        }catch (Exception e){
+            log.error("task process failed,task={}",JSON.toJSONString(retryDisruptorTask),e);
+            int count = retryDisruptorTaskMapper.incrementFailedCount(
+                    retryDisruptorTask.getId(),
+                    "任务执行失败，发生异常，异常信息:" + e.getMessage() + "，请检查，task=" + JSON.toJSONString(retryDisruptorTask),
+                    retryDisruptorTask.getVersion()
+            );
+             throw new RuntimeException(e);
+        }
+        log.info("task process successfully,task={}",JSON.toJSONString(retryDisruptorTask));
 
     }
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContextAware = applicationContextAware;
+        this.applicationContext = applicationContext;
     }
 }
