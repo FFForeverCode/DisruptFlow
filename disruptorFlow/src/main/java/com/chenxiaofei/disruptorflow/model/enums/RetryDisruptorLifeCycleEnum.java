@@ -3,6 +3,7 @@ package com.chenxiaofei.disruptorflow.model.enums;
 import lombok.Getter;
 
 import static com.chenxiaofei.disruptorflow.model.enums.RetryDisruptorTaskEnum.DEMO_TASK;
+import static com.chenxiaofei.disruptorflow.model.enums.RetryDisruptorTaskEnum.DEMO_TASK2;
 
 /**
  * @author chenxiaofei
@@ -13,7 +14,7 @@ import static com.chenxiaofei.disruptorflow.model.enums.RetryDisruptorTaskEnum.D
 @Getter
 public enum RetryDisruptorLifeCycleEnum {
 
-    DEMO_TASKS("demo任务",DEMO_TASK),
+    DEMO_TASKS("demo任务",DEMO_TASK,DEMO_TASK2),
     ;
 
 

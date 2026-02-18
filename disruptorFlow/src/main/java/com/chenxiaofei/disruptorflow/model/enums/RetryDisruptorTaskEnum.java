@@ -17,7 +17,8 @@ import java.util.stream.Stream;
 @Getter
 public enum RetryDisruptorTaskEnum {
 
-    DEMO_TASK(1,"demo任务","demoTaskProcessor"),
+    DEMO_TASK(1,"demo任务1","demoTaskProcessor1"),
+    DEMO_TASK2(2,"demo任务2","demoTaskProcessor2"),
     ;
 
 
