@@ -7,6 +7,7 @@
 ---
 
 ###  核心架构设计 (Architectural Design)
+![整体架构图.png](disruptorFlow/src/main/java/com/chenxiaofei/disruptorflow/docs/%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84%E5%9B%BE.png)
 
 * **高性能内核：** 摒弃传统的 `BlockingQueue`，采用基于 **RingBuffer** 的无锁并发模型。通过 **CAS (Compare and Swap)** 操作及 **Cache Line Padding（消除伪共享）** 机制，彻底榨干单机 CPU 性能，实现微秒级调度。
 * **可靠性屏障：** * **本地消息表模式：** 业务逻辑与任务持久化共享同一个 DB 事务，确保“动作执行”与“任务记录”的**强原子性**。
@@ -19,9 +20,22 @@
 
 
 ---
+### 核心流程
+#### 主流程
+![主流程 - 任务提交与执行流程.png](disruptorFlow/src/main/java/com/chenxiaofei/disruptorflow/docs/%E4%B8%BB%E6%B5%81%E7%A8%8B%20-%20%E4%BB%BB%E5%8A%A1%E6%8F%90%E4%BA%A4%E4%B8%8E%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B.png)
+#### RocketMQ延迟重试流程
+![RocketMQ延迟重试流程.png](disruptorFlow/src/main/java/com/chenxiaofei/disruptorflow/docs/RocketMQ%E5%BB%B6%E8%BF%9F%E9%87%8D%E8%AF%95%E6%B5%81%E7%A8%8B.png)
+#### 幂等保护机制
+![img.png](img.png)
+####  异常处理与告警流程
+![异常处理与告警流程.png](disruptorFlow/src/main/java/com/chenxiaofei/disruptorflow/docs/%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E4%B8%8E%E5%91%8A%E8%AD%A6%E6%B5%81%E7%A8%8B.png)
+####  完整业务流程泳道图
+![完整业务流程泳道图.png](disruptorFlow/src/main/java/com/chenxiaofei/disruptorflow/docs/%E5%AE%8C%E6%95%B4%E4%B8%9A%E5%8A%A1%E6%B5%81%E7%A8%8B%E6%B3%B3%E9%81%93%E5%9B%BE.png)
+
+---
+
 
 ### 技术亮点 (Technical Highlights)
-
 * **三重幂等保护机制：** 针对重试场景，引擎强制执行 **“状态预检 + 乐观锁（Version）CAS 更新 + 处理类幂等校验”**，确保任务在弱网络环境下不被重复触发。
 * **灵活的任务编排 (DAG Support)：**
 支持基于 `Lifecycle` 的任务链定义。通过实现 `TaskProcessor` 接口，开发者可以像搭积木一样编排并行或串行的异步任务流（如：取消订单时并行执行退款与库存回滚）。
