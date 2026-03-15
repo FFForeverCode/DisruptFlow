@@ -6,7 +6,7 @@ import com.chenxiaofei.disruptflow.model.RetryDisruptorTask;
 import com.chenxiaofei.disruptflow.model.RetryDisruptorTaskEvent;
 import com.chenxiaofei.disruptflow.repository.mapper.RetryDisruptorTaskMapper;
 import com.chenxiaofei.disruptflow.support.mq.RocketMQProducer;
-import com.chenxiaofei.disruptflow.support.mq.model.DelayLevel;
+import com.chenxiaofei.disruptflow.support.mq.enums.DelayLevel;
 import com.chenxiaofei.disruptflow.support.mq.model.MessageBuild;
 import com.chenxiaofei.disruptflow.support.mq.model.RocketmqProperties;
 import com.lmax.disruptor.ExceptionHandler;

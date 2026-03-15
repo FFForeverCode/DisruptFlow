@@ -1,4 +1,4 @@
-package com.chenxiaofei.disruptflow.support.mq.model;
+package com.chenxiaofei.disruptflow.support.mq.enums;
 
 /**
  * @author chenxiaofei

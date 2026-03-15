@@ -1,5 +1,6 @@
 package com.chenxiaofei.disruptflow.support.mq.model;
 
+import com.chenxiaofei.disruptflow.support.mq.enums.DelayLevel;
 import lombok.Builder;
 import lombok.Getter;
 

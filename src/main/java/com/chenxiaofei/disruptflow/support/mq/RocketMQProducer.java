@@ -3,7 +3,7 @@ package com.chenxiaofei.disruptflow.support.mq;
 import com.chenxiaofei.disruptflow.support.mq.model.MessageBuild;
 import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.mapping.Environment;
+import org.springframework.core.env.Environment;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;

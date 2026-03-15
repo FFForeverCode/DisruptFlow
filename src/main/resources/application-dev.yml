@@ -1,0 +1,86 @@
+spring:
+  application:
+    name: DisruptFlow
+
+  # 数据源配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/disrupt_flow?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      auto-commit: true
+      idle-timeout: 30000
+      pool-name: DisruptFlowHikariCP
+      max-lifetime: 900000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.chenxiaofei.disruptflow.model
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# RocketMQ 配置
+rocketmq:
+  enabled: true
+  # NameServer 地址，多个用分号分隔
+  name-server: 127.0.0.1:9876
+  # 生产者组名
+  producer-group: DisruptFlowProducerGroup
+  # 消费者组名
+  consumer-group: DisruptFlowConsumerGroup
+  # 发送消息超时时间（毫秒）
+  send-msg-timeout: 3000
+  # 同步发送失败重试次数
+  retry-times-when-send-failed: 2
+  # 异步发送失败重试次数
+  retry-times-when-send-async-failed: 2
+  # 消息最大大小（字节，默认4MB）
+  max-message-size: 4194304
+  # 消息体压缩阈值（字节，默认4KB）
+  compress-msg-body-over-howmuch: 4096
+  # 发送失败时是否重试其他 Broker
+  retry-another-broker-when-not-store-ok: false
+  producer:
+    # 重试 Topic
+    retry-disruptor-topic: disruptorFlowException
+    # 重试 Tags
+    retry-disruptor-tags: disruptorFlowException
+
+# 线程池配置
+async-push-disruptor-flow-executor:
+  core-pool-size: 10
+  max-pool-size: 16
+  keep-alive-time: 500
+  queue-size: 10
+
+# 重试配置
+retry:
+  failed:
+    count:
+      limit: 3
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.chenxiaofei.disruptflow: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId}] %logger{50} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId}] %logger{50} - %msg%n"
+  file:
+    name: ./logs/disrupt-flow.log
+    max-size: 100MB
+    max-history: 30
