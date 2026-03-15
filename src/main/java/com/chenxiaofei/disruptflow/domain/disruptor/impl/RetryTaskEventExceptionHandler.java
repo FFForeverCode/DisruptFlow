@@ -30,6 +30,7 @@ public class RetryTaskEventExceptionHandler implements ExceptionHandler<RetryDis
 
 
 
+    @Resource
     private RocketmqProperties rocketMQProperties;
     @Resource
     private RetryDisruptorTaskMapper retryDisruptorTaskMapper;
@@ -54,8 +55,8 @@ public class RetryTaskEventExceptionHandler implements ExceptionHandler<RetryDis
         event.setShouldCheckUnfinished(true);
         rocketMqProducer.asyncSend(
                 MessageBuild.builder()
-                        .topic(rocketMQProperties.getRetryDisruptorTopic())
-                        .tags(rocketMQProperties.getRetryDisruptorTags())
+                        .topic(rocketMQProperties.getProducer().getRetryDisruptorTopic())
+                        .tags(rocketMQProperties.getProducer().getRetryDisruptorTags())
                         .body(JSON.toJSONString(event))
                         .delayLevel(DelayLevel.getLevel(retryDisruptorTask.getFailCount()+1))
                         .build(),
