@@ -2,6 +2,7 @@ package com.chenxiaofei.disruptflow.domain.disruptor.impl;
 
 
 import com.chenxiaofei.disruptflow.model.RetryDisruptorTaskEvent;
+import com.lmax.disruptor.dsl.Disruptor;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Service;
 public class RetryDisruptorEventPusher {
 
     @Resource
-    private Disruptor<RetryDisruptorTaskEvent>disruptor;
+    private Disruptor<RetryDisruptorTaskEvent> disruptor;
 
     /**
      * 将event推送至环形队列中
