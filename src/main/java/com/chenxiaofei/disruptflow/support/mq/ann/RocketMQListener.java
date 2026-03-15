@@ -1,6 +1,6 @@
 package com.chenxiaofei.disruptflow.support.mq.ann;
 
-import com.chenxiaofei.disruptorflow.support.mq.model.DelayLevel;
+import com.chenxiaofei.disruptflow.support.mq.model.DelayLevel;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.MessageModel;
 

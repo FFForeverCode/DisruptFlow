@@ -1,7 +1,7 @@
 package com.chenxiaofei.disruptflow.repository;
 
-import com.chenxiaofei.disruptorflow.model.RetryDisruptorTask;
-import com.chenxiaofei.disruptorflow.repository.mapper.RetryDisruptorTaskMapper;
+import com.chenxiaofei.disruptflow.model.RetryDisruptorTask;
+import com.chenxiaofei.disruptflow.repository.mapper.RetryDisruptorTaskMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 

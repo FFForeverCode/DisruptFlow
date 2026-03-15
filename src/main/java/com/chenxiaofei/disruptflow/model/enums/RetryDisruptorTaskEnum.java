@@ -1,10 +1,8 @@
 package com.chenxiaofei.disruptflow.model.enums;
 
-import io.netty.util.internal.StringUtil;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 

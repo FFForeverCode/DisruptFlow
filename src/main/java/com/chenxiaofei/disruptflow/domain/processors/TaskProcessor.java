@@ -1,6 +1,7 @@
 package com.chenxiaofei.disruptflow.domain.processors;
 
-import com.chenxiaofei.disruptorflow.model.RetryDisruptorTask;
+
+import com.chenxiaofei.disruptflow.model.RetryDisruptorTask;
 
 /**
  * @author chenxiaofei

@@ -3,7 +3,6 @@ package com.chenxiaofei.disruptflow.support.mq.core;
 import com.google.common.collect.Lists;
 import org.springframework.messaging.converter.*;
 import org.springframework.util.ClassUtils;
-import tools.jackson.databind.util.ClassUtil;
 
 import java.util.List;
 

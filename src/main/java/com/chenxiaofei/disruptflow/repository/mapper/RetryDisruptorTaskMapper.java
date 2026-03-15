@@ -1,9 +1,8 @@
 package com.chenxiaofei.disruptflow.repository.mapper;
 
-import com.chenxiaofei.disruptorflow.model.RetryDisruptorTask;
+import com.chenxiaofei.disruptflow.model.RetryDisruptorTask;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-
 import java.util.List;
 
 /**

@@ -1,7 +1,6 @@
 package com.chenxiaofei.disruptflow.repository;
 
-import com.chenxiaofei.disruptorflow.model.RetryDisruptorTask;
-import org.apache.ibatis.annotations.Param;
+import com.chenxiaofei.disruptflow.model.RetryDisruptorTask;
 
 import java.util.List;
 

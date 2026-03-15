@@ -2,9 +2,8 @@ package com.chenxiaofei.disruptflow.model.enums;
 
 import lombok.Getter;
 
-import static com.chenxiaofei.disruptorflow.model.enums.RetryDisruptorTaskEnum.DEMO_TASK;
-import static com.chenxiaofei.disruptorflow.model.enums.RetryDisruptorTaskEnum.DEMO_TASK2;
-
+import static com.chenxiaofei.disruptflow.model.enums.RetryDisruptorTaskEnum.DEMO_TASK;
+import static com.chenxiaofei.disruptflow.model.enums.RetryDisruptorTaskEnum.DEMO_TASK2;
 /**
  * @author chenxiaofei
  * @project DisruptFlow

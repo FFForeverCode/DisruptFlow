@@ -1,5 +1,6 @@
 package com.chenxiaofei.disruptflow.domain.disruptor;
 
+import com.chenxiaofei.disruptflow.model.RetryDisruptorTask;
 import com.chenxiaofei.disruptorflow.model.RetryDisruptorTask;
 
 import java.util.List;
