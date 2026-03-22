@@ -2,8 +2,8 @@ package com.chenxiaofei.disruptflow.model.enums;
 
 import lombok.Getter;
 
-import static com.chenxiaofei.disruptflow.model.enums.RetryDisruptorTaskEnum.DEMO_TASK;
-import static com.chenxiaofei.disruptflow.model.enums.RetryDisruptorTaskEnum.DEMO_TASK2;
+import static com.chenxiaofei.disruptflow.model.enums.RetryDisruptorTaskEnum.*;
+
 /**
  * @author chenxiaofei
  * @project DisruptFlow
@@ -14,6 +14,8 @@ import static com.chenxiaofei.disruptflow.model.enums.RetryDisruptorTaskEnum.DEM
 public enum RetryDisruptorLifeCycleEnum {
 
     DEMO_TASKS("demo任务",DEMO_TASK,DEMO_TASK2),
+    CANCEL_LIFE("订单取消",CANCEL_EXPRESS,CANCEL_DELIVER,CANCEL_SHOP_INVENTORY,CANCEL_WAREHOUSE_INVENTORY,
+            CANCEL_REFUND,CANCEL_ORDER_DELIVER_EXCEPTION,CANCEL_GROUP_ORDER,CANCEL_ORDER_AFTERSALE_TASK,CANCEL_FREE_GOODS_COUPON),
     ;
 
 
