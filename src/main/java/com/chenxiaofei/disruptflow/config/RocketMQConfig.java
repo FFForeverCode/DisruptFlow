@@ -1,11 +1,12 @@
 package com.chenxiaofei.disruptflow.config;
 
-import com.chenxiaofei.disruptflow.support.mq.RocketMQConsumer;
-import com.chenxiaofei.disruptflow.support.mq.RocketMQListenerContainer;
-import com.chenxiaofei.disruptflow.support.mq.RocketMQProducer;
-import com.chenxiaofei.disruptflow.support.mq.ann.RocketMQListener;
-import com.chenxiaofei.disruptflow.support.mq.exception.RocketMQConfigException;
-import com.chenxiaofei.disruptflow.support.mq.model.RocketmqProperties;
+import com.chenxiaofei.disruptflow.mq.RocketMQConsumer;
+import com.chenxiaofei.disruptflow.mq.RocketMQListenerContainer;
+import com.chenxiaofei.disruptflow.mq.RocketMQProducer;
+import com.chenxiaofei.disruptflow.mq.ann.RocketMQListener;
+import com.chenxiaofei.disruptflow.mq.enums.ConsumeMode;
+import com.chenxiaofei.disruptflow.mq.exception.RocketMQConfigException;
+import com.chenxiaofei.disruptflow.mq.model.RocketmqProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
@@ -182,12 +183,12 @@ public class RocketMQConfig implements ApplicationContextAware {
     /**
      * 转换消费模式
      */
-    private com.chenxiaofei.disruptflow.support.mq.enums.ConsumeMode convertConsumeMode(
+    private ConsumeMode convertConsumeMode(
             Object springConsumeMode) {
         if (springConsumeMode != null && springConsumeMode.toString().equals("ORDERLY")) {
-            return com.chenxiaofei.disruptflow.support.mq.enums.ConsumeMode.ORDERLY;
+            return ConsumeMode.ORDERLY;
         }
-        return com.chenxiaofei.disruptflow.support.mq.enums.ConsumeMode.CONCURRENTLY;
+        return ConsumeMode.CONCURRENTLY;
     }
     
     /**
