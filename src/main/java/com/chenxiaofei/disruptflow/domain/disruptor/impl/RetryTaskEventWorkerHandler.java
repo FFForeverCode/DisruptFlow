@@ -1,23 +1,20 @@
 package com.chenxiaofei.disruptflow.domain.disruptor.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.chenxiaofei.disruptflow.config.properties.RetryDisruptorProperties;
 import com.chenxiaofei.disruptflow.domain.erp.ErpService;
 import com.chenxiaofei.disruptflow.domain.processors.TaskProcessor;
+import com.chenxiaofei.disruptflow.domain.processors.TaskProcessorRegistry;
 import com.chenxiaofei.disruptflow.model.RetryDisruptorTask;
 import com.chenxiaofei.disruptflow.model.RetryDisruptorTaskEvent;
-import com.chenxiaofei.disruptflow.model.enums.RetryDisruptorTaskEnum;
 import com.chenxiaofei.disruptflow.model.enums.TaskStateEnum;
 import com.chenxiaofei.disruptflow.repository.mapper.RetryDisruptorTaskMapper;
 import com.chenxiaofei.disruptflow.support.utils.UserContext;
+import io.micrometer.core.instrument.MeterRegistry;
 import com.lmax.disruptor.WorkHandler;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.Resource;
 import java.util.Objects;
 
 /**
@@ -28,9 +25,7 @@ import java.util.Objects;
  */
 @Slf4j
 @Service
-public class RetryTaskEventWorkerHandler  implements WorkHandler<RetryDisruptorTaskEvent>, ApplicationContextAware {
-
-    private ApplicationContext applicationContext;
+public class RetryTaskEventWorkerHandler  implements WorkHandler<RetryDisruptorTaskEvent> {
 
 
     @Resource
@@ -39,29 +34,40 @@ public class RetryTaskEventWorkerHandler  implements WorkHandler<RetryDisruptorT
     @Resource
     private ErpService erpService;
 
+    @Resource
+    private RetryDisruptorProperties retryDisruptorProperties;
 
-    @Value("${retry.failed.count.limit}")
-    private Integer failedCountLimit = 3;
+    @Resource
+    private TaskProcessorRegistry taskProcessorRegistry;
 
-
+    @Resource
+    private MeterRegistry meterRegistry;
 
 
     @Override
     public void onEvent(RetryDisruptorTaskEvent retryDisruptorTaskEvent) throws Exception {
+        if (Objects.isNull(retryDisruptorTaskEvent) || Objects.isNull(retryDisruptorTaskEvent.getRetryDisruptorTask())) {
+            log.warn("收到空任务事件,忽略执行,event={}", JSON.toJSONString(retryDisruptorTaskEvent));
+            return;
+        }
         //拉取event执行
         log.info("开始执行任务,taskEvent={}", JSON.toJSONString(retryDisruptorTaskEvent.getRetryDisruptorTask()));
         //获取processor
         RetryDisruptorTask retryDisruptorTask = retryDisruptorTaskEvent.getRetryDisruptorTask();
+        String metricTaskType = Objects.isNull(retryDisruptorTask.getHandleProcessor())
+                ? "UNKNOWN"
+                : retryDisruptorTask.getHandleProcessor();
         //不需要检查是否需要检查是否执行完毕-第一次执行，直接执行即可
-        if(!retryDisruptorTaskEvent.getShouldCheckUnfinished()){
+        if(!retryDisruptorTaskEvent.isShouldCheckUnfinished()){
             execute(retryDisruptorTask);
             return;
         }
         //检查task状态-是否完成、是否超过重试次数
-        retryDisruptorTask = retryDisruptorTaskMapper.selectByPrimaryId(retryDisruptorTask.getId());
+        Long taskId = retryDisruptorTask.getId();
+        retryDisruptorTask = retryDisruptorTaskMapper.selectByPrimaryId(taskId);
         if(Objects.isNull(retryDisruptorTask)){
-            log.error("this task is null,not expected;任务不存在，id={}",retryDisruptorTask.getId());
-            throw new RuntimeException("this task is null,not expected;任务不存在，id:"+retryDisruptorTask.getId());
+            log.error("this task is null,not expected;任务不存在，id={}",taskId);
+            throw new RuntimeException("this task is null,not expected;任务不存在，id:"+taskId);
         }
         //查询是否完成
         boolean isFinished = Objects.equals(retryDisruptorTask.getState(), TaskStateEnum.FINISHED.getValue());
@@ -71,13 +77,14 @@ public class RetryTaskEventWorkerHandler  implements WorkHandler<RetryDisruptorT
         }
         //检查是否超过最大重试次数
         if (isOverFailedCountLimit(retryDisruptorTask)) {
+            meterRegistry.counter("disruptflow.task.over_limit", "taskType", metricTaskType)
+                    .increment();
 
             try{
                 erpService.sendMessage("任务重试失败超过最大次数,请人工干预,task="
                         + JSON.toJSONString(retryDisruptorTask), UserContext.getUserId());
             } catch (Exception e) {
                 log.error("执行erp下游服务发送消息失败,task={}",JSON.toJSONString(retryDisruptorTask),e);
-                throw new RuntimeException(e);
             }
             return;
         }
@@ -99,7 +106,8 @@ public class RetryTaskEventWorkerHandler  implements WorkHandler<RetryDisruptorT
      * @return
      */
     private boolean isOverFailedCountLimit(RetryDisruptorTask retryDisruptorTask) {
-        return retryDisruptorTask.getFailCount() >= failedCountLimit;
+        int failCount = Objects.isNull(retryDisruptorTask.getFailCount()) ? 0 : retryDisruptorTask.getFailCount();
+        return failCount >= retryDisruptorProperties.getFailedCountLimit();
     }
 
     /**
@@ -107,50 +115,71 @@ public class RetryTaskEventWorkerHandler  implements WorkHandler<RetryDisruptorT
      * @param retryDisruptorTask retryDisruptorTask
      */
     private void execute(RetryDisruptorTask retryDisruptorTask) {
+        boolean failureMarked = false;
         //获取对应的processors执行
         String handleProcessor = retryDisruptorTask.getHandleProcessor();
-        RetryDisruptorTaskEnum retryDisruptorTaskEnum = RetryDisruptorTaskEnum.valueOf(handleProcessor);
-        String processorName = retryDisruptorTaskEnum.getBeanName();
-        TaskProcessor processor = (TaskProcessor) applicationContext.getBean(processorName);
-        if(Objects.isNull(processor)){
-            log.error("processor is null,not expected;processor不存在，processorName={}",processorName);
-            throw new RuntimeException("processor is null,not expected;processor不存在，" +
-                    "processorName:" +processorName);
+        String metricTaskType = Objects.isNull(handleProcessor) ? "UNKNOWN" : handleProcessor;
+        TaskProcessor processor;
+        try {
+            processor = taskProcessorRegistry.getProcessor(handleProcessor);
+        } catch (Exception e) {
+            markTaskFailed(retryDisruptorTask, "无效处理器类型:" + handleProcessor);
+            throw new RuntimeException("无效处理器类型:" + handleProcessor, e);
         }
+
         try{
             boolean result = processor.execute(retryDisruptorTask);
             if(result){
-                log.info("task process successfully");
-                int count = retryDisruptorTaskMapper.updateToFinished(
+                RetryDisruptorTask latestTask = retryDisruptorTaskMapper.selectByPrimaryId(retryDisruptorTask.getId());
+                int currentVersion = Objects.isNull(latestTask) || Objects.isNull(latestTask.getVersion())
+                        ? Objects.requireNonNullElse(retryDisruptorTask.getVersion(), 0)
+                        : latestTask.getVersion();
+                int updatedCount = retryDisruptorTaskMapper.updateToFinished(
                         retryDisruptorTask.getId(),
-                        retryDisruptorTask.getVersion()
+                        currentVersion
                 );
+                if (updatedCount < 1) {
+                    throw new RuntimeException("更新任务状态为完成失败,id=" + retryDisruptorTask.getId());
+                }
+                meterRegistry.counter("disruptflow.task.success", "taskType", metricTaskType).increment();
             }else{
-                log.info("task process failed");
-                int count = retryDisruptorTaskMapper.incrementFailedCount(
-                        retryDisruptorTask.getId(),
-                        "任务执行失败，请检查，task=" + JSON.toJSONString(retryDisruptorTask),
-                        retryDisruptorTask.getVersion()
+                markTaskFailed(
+                        retryDisruptorTask,
+                        "任务执行失败，请检查"
                 );
-                throw new RuntimeException("com.chenxiaofei.disruptorflow.domain.disruptor.impl" +
-                        ".RetryTaskEventWorkerHandler.execute retryTask failed");
+                failureMarked = true;
+                meterRegistry.counter("disruptflow.task.failed", "taskType", metricTaskType).increment();
+                throw new RuntimeException("任务执行失败,id=" + retryDisruptorTask.getId());
             }
 
         }catch (Exception e){
             log.error("task process failed,task={}",JSON.toJSONString(retryDisruptorTask),e);
-            int count = retryDisruptorTaskMapper.incrementFailedCount(
-                    retryDisruptorTask.getId(),
-                    "任务执行失败，发生异常，异常信息:" + e.getMessage() + "，请检查，task=" + JSON.toJSONString(retryDisruptorTask),
-                    retryDisruptorTask.getVersion()
-            );
-             throw new RuntimeException(e);
+            if (!failureMarked) {
+                markTaskFailed(
+                        retryDisruptorTask,
+                        "任务执行失败，发生异常:" + e.getMessage()
+                );
+                meterRegistry.counter("disruptflow.task.failed", "taskType", metricTaskType).increment();
+            }
+            throw new RuntimeException(e);
         }
         log.info("task process successfully,task={}",JSON.toJSONString(retryDisruptorTask));
 
     }
 
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
+    private void markTaskFailed(RetryDisruptorTask retryDisruptorTask, String reason) {
+        String remark = reason + ",task=" + JSON.toJSONString(retryDisruptorTask);
+        RetryDisruptorTask latestTask = retryDisruptorTaskMapper.selectByPrimaryId(retryDisruptorTask.getId());
+        int currentVersion = Objects.isNull(latestTask) || Objects.isNull(latestTask.getVersion())
+                ? Objects.requireNonNullElse(retryDisruptorTask.getVersion(), 0)
+                : latestTask.getVersion();
+        int updatedCount = retryDisruptorTaskMapper.incrementFailedCount(
+                retryDisruptorTask.getId(),
+                remark,
+                currentVersion
+        );
+        if (updatedCount < 1) {
+            log.error("更新任务失败次数失败,id={},remark={}", retryDisruptorTask.getId(), remark);
+        }
     }
 }

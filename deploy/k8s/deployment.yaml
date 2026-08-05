@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: disruptflow
+  namespace: disruptflow
+  labels:
+    app: disruptflow
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: disruptflow
+  template:
+    metadata:
+      labels:
+        app: disruptflow
+    spec:
+      containers:
+        - name: disruptflow
+          image: disruptflow:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: disruptflow-config
+            - secretRef:
+                name: disruptflow-secret
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1024Mi"
+            limits:
+              cpu: "2"
+              memory: "4096Mi"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: disruptflow
+  namespace: disruptflow
+  labels:
+    app: disruptflow
+spec:
+  selector:
+    app: disruptflow
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  type: ClusterIP

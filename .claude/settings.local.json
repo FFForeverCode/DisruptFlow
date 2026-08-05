@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/usr/libexec/java_home -V)",
+      "Read(//Library/Java/JavaVirtualMachines/**)",
+      "Bash(mvn -v)",
+      "Read(//Users/chenxiaofei.ropz/.m2/repository/org/springframework/boot/spring-boot-starter-parent/**)",
+      "Read(//Users/chenxiaofei.ropz/.m2/repository/org/mybatis/spring/boot/mybatis-spring-boot-starter/**)",
+      "Read(//Users/chenxiaofei.ropz/.m2/repository/org/apache/rocketmq/rocketmq-client/**)",
+      "Read(//Users/chenxiaofei.ropz/.m2/repository/org/apache/rocketmq/rocketmq-spring-boot-starter/**)",
+      "Read(//Users/chenxiaofei.ropz/.m2/repository/com/lmax/disruptor/**)",
+      "Read(//Users/chenxiaofei.ropz/.m2/repository/org/springframework/boot/spring-boot-starter-webmvc/**)",
+      "Read(//Users/chenxiaofei.ropz/.m2/repository/org/springframework/boot/spring-boot-starter-web/**)",
+      "Read(//Users/chenxiaofei.ropz/.m2/repository/org/springframework/boot/spring-boot-starter-data-redis/**)"
+    ]
+  }
+}

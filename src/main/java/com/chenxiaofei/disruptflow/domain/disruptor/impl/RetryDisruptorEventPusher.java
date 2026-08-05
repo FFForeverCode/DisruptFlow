@@ -6,6 +6,8 @@ import com.lmax.disruptor.dsl.Disruptor;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
+
 /**
  * @author chenxiaofei
  * @project DisruptFlow
@@ -23,6 +25,9 @@ public class RetryDisruptorEventPusher {
      * @param event
      */
     public void pushEvent2Disruptor(RetryDisruptorTaskEvent event){
+        if (Objects.isNull(event) || Objects.isNull(event.getRetryDisruptorTask())) {
+            return;
+        }
         disruptor.publishEvent(
                 (eventObj,seq)->{
                     eventObj.setRetryDisruptorTask(event.getRetryDisruptorTask());

@@ -1,6 +1,8 @@
 spring:
   application:
     name: DisruptFlow
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
   # 数据源配置
   datasource:
@@ -67,10 +69,25 @@ async-push-disruptor-flow-executor:
   queue-size: 10
 
 # 重试配置
-retry:
-  failed:
-    count:
-      limit: 3
+retry-disruptor:
+  failed-count-limit: 3
+  buffer-size: 1024
+  worker-multiplier: 2
+
+server:
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+  health:
+    probes:
+      enabled: true
 
 # 日志配置
 logging:

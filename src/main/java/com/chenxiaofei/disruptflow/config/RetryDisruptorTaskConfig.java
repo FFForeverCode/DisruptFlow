@@ -1,67 +1,59 @@
 package com.chenxiaofei.disruptflow.config;
 
+import com.chenxiaofei.disruptflow.config.properties.RetryDisruptorProperties;
 import com.chenxiaofei.disruptflow.domain.disruptor.impl.RetryTaskEventExceptionHandler;
 import com.chenxiaofei.disruptflow.domain.disruptor.impl.RetryTaskEventWorkerHandler;
 import com.chenxiaofei.disruptflow.model.RetryDisruptorTaskEvent;
 import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.ExceptionHandler;
 import com.lmax.disruptor.dsl.Disruptor;
+import com.lmax.disruptor.dsl.ProducerType;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * @author chenxiaofei
- * @project DisruptFlow
- * @date 2026-02-18
- * @description: disruptor队列配置类
+ * Disruptor 队列配置。
  */
 @Configuration
+@RequiredArgsConstructor
 public class RetryDisruptorTaskConfig {
 
+    private static final String THREAD_FACTORY_DESC = "retry-disruptor-task-";
 
-    private static final String THREAD_FACTORY_DESC = "retry_disruptor_task_thread_seq:";
-
-    private static final int BUFF_SIZE = 128;
-
-    private static final int WORKER_SIZE = Runtime.getRuntime().availableProcessors() * 2;
-
-
-
+    private final RetryDisruptorProperties retryDisruptorProperties;
 
     @Bean
-    public RetryTaskEventWorkerHandler getRetryTaskEventWorkerHandler(){
-        return new RetryTaskEventWorkerHandler();
-    }
-
-    @Bean
-    public ExceptionHandler<? super RetryDisruptorTaskEvent> getRetryTaskEventExceptionHandler(){
-        return new RetryTaskEventExceptionHandler();
-    }
-
-    @Bean
-    public EventHandler<RetryDisruptorTaskEvent> disruptorClearEventHandler(){
-        return (event,l,b)->{
-            event = null;
+    public EventHandler<RetryDisruptorTaskEvent> disruptorClearEventHandler() {
+        return (event, l, b) -> {
+            event.setRetryDisruptorTask(null);
+            event.setShouldCheckUnfinished(null);
         };
     }
 
-    @Bean
-    public Disruptor<RetryDisruptorTaskEvent> getDisruptor(){
-        AtomicInteger atomicInteger = new AtomicInteger(0);
+    @Bean(destroyMethod = "shutdown")
+    public Disruptor<RetryDisruptorTaskEvent> disruptor(
+            RetryTaskEventExceptionHandler exceptionHandler,
+            RetryTaskEventWorkerHandler retryTaskEventWorkerHandler
+    ) {
+        AtomicInteger sequence = new AtomicInteger(0);
+        int workerSize = Math.max(1,
+                Runtime.getRuntime().availableProcessors() * retryDisruptorProperties.getWorkerMultiplier());
         Disruptor<RetryDisruptorTaskEvent> retryDisruptorTaskEventDisruptor = new Disruptor<>(
                 RetryDisruptorTaskEvent::new,
-                BUFF_SIZE,
-                r -> {
-                    return new Thread(r, THREAD_FACTORY_DESC + atomicInteger.getAndIncrement());
-                }
+                retryDisruptorProperties.getBufferSize(),
+                runnable -> new Thread(runnable, THREAD_FACTORY_DESC + sequence.getAndIncrement()),
+                ProducerType.MULTI,
+                new com.lmax.disruptor.BlockingWaitStrategy()
         );
-        RetryTaskEventWorkerHandler[] workerHandlers = new RetryTaskEventWorkerHandler[WORKER_SIZE];
-        for (int i = 0; i < WORKER_SIZE; i++) {
-            workerHandlers[i] = getRetryTaskEventWorkerHandler();
+
+        RetryTaskEventWorkerHandler[] workerHandlers = new RetryTaskEventWorkerHandler[workerSize];
+        for (int index = 0; index < workerSize; index++) {
+            workerHandlers[index] = retryTaskEventWorkerHandler;
         }
-        retryDisruptorTaskEventDisruptor.setDefaultExceptionHandler(getRetryTaskEventExceptionHandler());
+
+        retryDisruptorTaskEventDisruptor.setDefaultExceptionHandler(exceptionHandler);
         retryDisruptorTaskEventDisruptor.handleEventsWithWorkerPool(workerHandlers)
                 .then(disruptorClearEventHandler());
         retryDisruptorTaskEventDisruptor.start();

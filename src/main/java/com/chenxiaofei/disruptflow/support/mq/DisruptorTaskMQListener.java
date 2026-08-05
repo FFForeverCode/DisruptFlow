@@ -4,11 +4,10 @@ import com.alibaba.fastjson.JSON;
 import com.chenxiaofei.disruptflow.domain.disruptor.impl.RetryDisruptorEventPusher;
 import com.chenxiaofei.disruptflow.model.RetryDisruptorTaskEvent;
 import com.chenxiaofei.disruptflow.support.mq.ann.RocketMQListener;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.Resource;
 import java.util.Objects;
 
 /**

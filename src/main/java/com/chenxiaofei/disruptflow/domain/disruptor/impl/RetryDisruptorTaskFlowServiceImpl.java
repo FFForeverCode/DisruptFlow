@@ -37,11 +37,11 @@ public class RetryDisruptorTaskFlowServiceImpl implements RetryDisruptorTaskFlow
     @Override
     @Async("asyncPushDisruptorFlowExecutor")
     public void pushDisruptorFlow(List<RetryDisruptorTask> retryDisruptorTasks) {
-        log.info("准备推送任务，size={}",retryDisruptorTasks.size());
         if(CollectionUtils.isEmpty(retryDisruptorTasks)){
             log.warn("任务列表为空,无需推送");
             return;
         }
+        log.info("准备推送任务，size={}",retryDisruptorTasks.size());
         //持久化消息体
         int count = retryDisruptorTaskRepository.insertBatch(retryDisruptorTasks);
         if(count <= 0){

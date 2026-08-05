@@ -1,15 +1,18 @@
 package com.chenxiaofei.disruptflow;
 
+import com.chenxiaofei.disruptflow.config.properties.AsyncExecutorProperties;
+import com.chenxiaofei.disruptflow.config.properties.RetryDisruptorProperties;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 @EnableAsync
-@EnableAutoConfiguration
-@EnableConfigurationProperties
 @SpringBootApplication
+@EnableConfigurationProperties({
+        AsyncExecutorProperties.class,
+        RetryDisruptorProperties.class
+})
 public class DisruptFlowApplication {
 
     public static void main(String[] args) {
