@@ -1,16 +1,18 @@
 package com.chenxiaofei.disruptflow.config;
 
-import com.chenxiaofei.disruptflow.support.mq.RocketMQConsumer;
-import com.chenxiaofei.disruptflow.support.mq.RocketMQListenerContainer;
-import com.chenxiaofei.disruptflow.support.mq.RocketMQProducer;
-import com.chenxiaofei.disruptflow.support.mq.ann.RocketMQListener;
-import com.chenxiaofei.disruptflow.support.mq.exception.RocketMQConfigException;
-import com.chenxiaofei.disruptflow.support.mq.model.RocketmqProperties;
+import com.chenxiaofei.disruptflow.mq.RocketMQConsumer;
+import com.chenxiaofei.disruptflow.mq.RocketMQListenerContainer;
+import com.chenxiaofei.disruptflow.mq.RocketMQProducer;
+import com.chenxiaofei.disruptflow.mq.ann.RocketMQListener;
+import com.chenxiaofei.disruptflow.mq.enums.ConsumeMode;
+import com.chenxiaofei.disruptflow.mq.exception.RocketMQConfigException;
+import com.chenxiaofei.disruptflow.mq.model.RocketmqProperties;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
 import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -20,6 +22,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
+
 import org.springframework.messaging.converter.CompositeMessageConverter;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.converter.MessageConverter;
@@ -186,23 +189,23 @@ public class RocketMQConfig implements ApplicationContextAware {
     /**
      * 转换消费模式
      */
-    private com.chenxiaofei.disruptflow.support.mq.enums.ConsumeMode convertConsumeMode(
+    private ConsumeMode convertConsumeMode(
             Object springConsumeMode) {
         if (springConsumeMode != null && springConsumeMode.toString().equals("ORDERLY")) {
-            return com.chenxiaofei.disruptflow.support.mq.enums.ConsumeMode.ORDERLY;
+            return ConsumeMode.ORDERLY;
         }
-        return com.chenxiaofei.disruptflow.support.mq.enums.ConsumeMode.CONCURRENTLY;
+        return ConsumeMode.CONCURRENTLY;
     }
     
     /**
      * 转换消息模型
      */
-    private org.apache.rocketmq.common.protocol.heartbeat.MessageModel convertMessageModel(
+    private MessageModel convertMessageModel(
             Object springMessageModel) {
         if (springMessageModel != null && springMessageModel.toString().equals("BROADCASTING")) {
-            return org.apache.rocketmq.common.protocol.heartbeat.MessageModel.BROADCASTING;
+            return MessageModel.BROADCASTING;
         }
-        return org.apache.rocketmq.common.protocol.heartbeat.MessageModel.CLUSTERING;
+        return MessageModel.CLUSTERING;
     }
 
     @PreDestroy

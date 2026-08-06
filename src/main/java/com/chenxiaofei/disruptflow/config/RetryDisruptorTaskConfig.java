@@ -4,6 +4,7 @@ import com.chenxiaofei.disruptflow.config.properties.RetryDisruptorProperties;
 import com.chenxiaofei.disruptflow.domain.disruptor.impl.RetryTaskEventExceptionHandler;
 import com.chenxiaofei.disruptflow.domain.disruptor.impl.RetryTaskEventWorkerHandler;
 import com.chenxiaofei.disruptflow.model.RetryDisruptorTaskEvent;
+import com.lmax.disruptor.EventFactory;
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -41,9 +43,9 @@ public class RetryDisruptorTaskConfig {
         int workerSize = Math.max(1,
                 Runtime.getRuntime().availableProcessors() * retryDisruptorProperties.getWorkerMultiplier());
         Disruptor<RetryDisruptorTaskEvent> retryDisruptorTaskEventDisruptor = new Disruptor<>(
-                RetryDisruptorTaskEvent::new,
+                (EventFactory) RetryDisruptorTaskEvent::new,
                 retryDisruptorProperties.getBufferSize(),
-                runnable -> new Thread(runnable, THREAD_FACTORY_DESC + sequence.getAndIncrement()),
+                (Executor) runnable -> new Thread(runnable, THREAD_FACTORY_DESC + sequence.getAndIncrement()),
                 ProducerType.MULTI,
                 new com.lmax.disruptor.BlockingWaitStrategy()
         );

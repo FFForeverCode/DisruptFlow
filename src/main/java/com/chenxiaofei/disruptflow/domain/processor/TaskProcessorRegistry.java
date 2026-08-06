@@ -1,6 +1,6 @@
-package com.chenxiaofei.disruptflow.domain.processors;
+package com.chenxiaofei.disruptflow.domain.processor;
 
-import com.chenxiaofei.disruptflow.model.enums.RetryDisruptorTaskEnum;
+import com.chenxiaofei.disruptflow.common.enums.RetryDisruptorTaskEnum;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 

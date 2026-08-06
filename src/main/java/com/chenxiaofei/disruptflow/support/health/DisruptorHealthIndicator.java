@@ -3,8 +3,8 @@ package com.chenxiaofei.disruptflow.support.health;
 import com.chenxiaofei.disruptflow.model.RetryDisruptorTaskEvent;
 import com.lmax.disruptor.dsl.Disruptor;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.boot.health.contributor.Health;
+import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.stereotype.Component;
 
 /**

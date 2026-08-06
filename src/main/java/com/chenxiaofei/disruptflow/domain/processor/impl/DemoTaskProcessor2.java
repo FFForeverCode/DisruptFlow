@@ -1,6 +1,6 @@
-package com.chenxiaofei.disruptflow.domain.processors.impl;
+package com.chenxiaofei.disruptflow.domain.processor.impl;
 
-import com.chenxiaofei.disruptflow.domain.processors.TaskProcessor;
+import com.chenxiaofei.disruptflow.domain.processor.TaskProcessor;
 import com.chenxiaofei.disruptflow.model.RetryDisruptorTask;
 import org.springframework.stereotype.Service;
 
