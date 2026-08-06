@@ -3,19 +3,14 @@ package com.chenxiaofei.disruptflow.mq;
 import com.chenxiaofei.disruptflow.mq.model.MessageBuild;
 import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.env.Environment;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageQueue;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Service;
-import org.springframework.util.ClassUtils;
 
-import java.util.Objects;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author chenxiaofei
@@ -24,24 +19,13 @@ import java.util.Objects;
  * @description:
  */
 @Slf4j
-@Service
-public class RocketMQProducer implements InitializingBean, DisposableBean {
+public class RocketMQProducer {
 
 
-    private DefaultMQProducer defaultMQProducer;
+    private final DefaultMQProducer defaultMQProducer;
 
-    private Environment environment;
-
-    public RocketMQProducer(Environment environment, DefaultMQProducer defaultMQProducer) {
-        this.environment = environment;
+    public RocketMQProducer(DefaultMQProducer defaultMQProducer) {
         this.defaultMQProducer = defaultMQProducer;
-    }
-    @Override
-    public void destroy() throws Exception {
-        if (Objects.nonNull(defaultMQProducer)) {
-            this.defaultMQProducer.shutdown();
-            log.info("RocketMQProducer shutdown success");
-        }
     }
 
     public final SendResult send(MessageBuild messageBuild){
@@ -91,19 +75,9 @@ public class RocketMQProducer implements InitializingBean, DisposableBean {
         message.setTopic(messageBuild.getTopic());
         message.setTags(messageBuild.getTags());
         message.setKeys(messageBuild.getKeys());
-        message.setBody(messageBuild.getBody().getBytes());
+        message.setBody(messageBuild.getBody().getBytes(StandardCharsets.UTF_8));
         message.setDelayTimeLevel(messageBuild.getDelayLevel().level);
         return message;
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        ClassLoader classLoader = RocketMQProducer.class.getClassLoader();
-        if(Objects.nonNull(this.defaultMQProducer) && !ClassUtils.isPresent(
-                "org.apache.rocketmq.spring.core.RocketMQTemplate",classLoader)){
-            log.info("RocketMQTemplate is not exist,please check,default-MQ-Producer will not start");
-            this.defaultMQProducer.start();
-        }
     }
 
     public String toString(Message message){

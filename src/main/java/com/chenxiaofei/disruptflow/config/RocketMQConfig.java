@@ -1,18 +1,18 @@
 package com.chenxiaofei.disruptflow.config;
 
-import com.chenxiaofei.disruptflow.mq.RocketMQConsumer;
-import com.chenxiaofei.disruptflow.mq.RocketMQListenerContainer;
-import com.chenxiaofei.disruptflow.mq.RocketMQProducer;
-import com.chenxiaofei.disruptflow.mq.ann.RocketMQListener;
-import com.chenxiaofei.disruptflow.mq.enums.ConsumeMode;
-import com.chenxiaofei.disruptflow.mq.exception.RocketMQConfigException;
-import com.chenxiaofei.disruptflow.mq.model.RocketmqProperties;
+import com.chenxiaofei.disruptflow.support.mq.RocketMQConsumer;
+import com.chenxiaofei.disruptflow.support.mq.RocketMQListenerContainer;
+import com.chenxiaofei.disruptflow.support.mq.RocketMQProducer;
+import com.chenxiaofei.disruptflow.support.mq.ann.RocketMQListener;
+import com.chenxiaofei.disruptflow.support.mq.exception.RocketMQConfigException;
+import com.chenxiaofei.disruptflow.support.mq.model.RocketmqProperties;
+import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
@@ -20,7 +20,6 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
-import org.springframework.core.env.StandardEnvironment;
 import org.springframework.messaging.converter.CompositeMessageConverter;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.converter.MessageConverter;
@@ -28,6 +27,7 @@ import org.springframework.messaging.converter.MessageConverter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author chenxiaofei
@@ -37,17 +37,19 @@ import java.util.Map;
 @Configuration
 @EnableConfigurationProperties(RocketmqProperties.class)
 @ConditionalOnProperty(value = "rocketmq.enabled", havingValue = "true", matchIfMissing = true)
+@RequiredArgsConstructor
 public class RocketMQConfig implements ApplicationContextAware {
 
-    @Autowired
-    private RocketmqProperties rocketmqProperties;
+    private final RocketmqProperties rocketmqProperties;
 
     private ApplicationContext applicationContext;
+
+    private final List<RocketMQListenerContainer> listenerContainers = new CopyOnWriteArrayList<>();
 
     /**
      * 创建 RocketMQ 生产者
      */
-    @Bean
+    @Bean(destroyMethod = "shutdown")
     public DefaultMQProducer defaultMQProducer() {
         if (StringUtils.isEmpty(rocketmqProperties.getNameServer())) {
             throw new RocketMQConfigException("NameServer 地址未配置");
@@ -77,8 +79,8 @@ public class RocketMQConfig implements ApplicationContextAware {
      * 创建 RocketMQ 生产者服务
      */
     @Bean
-    public RocketMQProducer rocketMQProducer(StandardEnvironment environment, DefaultMQProducer defaultMQProducer) {
-        return new RocketMQProducer(environment, defaultMQProducer);
+    public RocketMQProducer rocketMQProducer(DefaultMQProducer defaultMQProducer) {
+        return new RocketMQProducer(defaultMQProducer);
     }
 
     /**
@@ -157,6 +159,7 @@ public class RocketMQConfig implements ApplicationContextAware {
         // 初始化并启动
         container.afterPropertiesSet();
         container.start();
+        listenerContainers.add(container);
         
         log.info("RocketMQ 消费者注册成功: group={}, topic={}, tags={}, bean={}", 
                 consumerGroup, topic, tags, beanName);
@@ -183,12 +186,12 @@ public class RocketMQConfig implements ApplicationContextAware {
     /**
      * 转换消费模式
      */
-    private ConsumeMode convertConsumeMode(
+    private com.chenxiaofei.disruptflow.support.mq.enums.ConsumeMode convertConsumeMode(
             Object springConsumeMode) {
         if (springConsumeMode != null && springConsumeMode.toString().equals("ORDERLY")) {
-            return ConsumeMode.ORDERLY;
+            return com.chenxiaofei.disruptflow.support.mq.enums.ConsumeMode.ORDERLY;
         }
-        return ConsumeMode.CONCURRENTLY;
+        return com.chenxiaofei.disruptflow.support.mq.enums.ConsumeMode.CONCURRENTLY;
     }
     
     /**
@@ -200,6 +203,19 @@ public class RocketMQConfig implements ApplicationContextAware {
             return org.apache.rocketmq.common.protocol.heartbeat.MessageModel.BROADCASTING;
         }
         return org.apache.rocketmq.common.protocol.heartbeat.MessageModel.CLUSTERING;
+    }
+
+    @PreDestroy
+    public void stopListenerContainers() {
+        for (RocketMQListenerContainer listenerContainer : listenerContainers) {
+            try {
+                listenerContainer.stop();
+                listenerContainer.destroy();
+            } catch (Exception ex) {
+                log.warn("RocketMQ 消费者容器关闭失败", ex);
+            }
+        }
+        listenerContainers.clear();
     }
 
     @Override

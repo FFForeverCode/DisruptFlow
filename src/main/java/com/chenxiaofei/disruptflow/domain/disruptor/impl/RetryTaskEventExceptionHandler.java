@@ -10,12 +10,11 @@ import com.chenxiaofei.disruptflow.mq.enums.DelayLevel;
 import com.chenxiaofei.disruptflow.mq.model.MessageBuild;
 import com.chenxiaofei.disruptflow.mq.model.RocketmqProperties;
 import com.lmax.disruptor.ExceptionHandler;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.Resource;
 import java.util.Objects;
 
 /**
@@ -53,12 +52,13 @@ public class RetryTaskEventExceptionHandler implements ExceptionHandler<RetryDis
         }
         event.setRetryDisruptorTask(retryDisruptorTask);
         event.setShouldCheckUnfinished(true);
+        int failCount = Objects.isNull(retryDisruptorTask.getFailCount()) ? 0 : retryDisruptorTask.getFailCount();
         rocketMqProducer.asyncSend(
                 MessageBuild.builder()
                         .topic(rocketMQProperties.getProducer().getRetryDisruptorTopic())
                         .tags(rocketMQProperties.getProducer().getRetryDisruptorTags())
                         .body(JSON.toJSONString(event))
-                        .delayLevel(DelayLevel.getLevel(retryDisruptorTask.getFailCount()+1))
+                        .delayLevel(DelayLevel.getLevel(failCount + 1))
                         .build(),
                 new SendCallback() {
                     @Override

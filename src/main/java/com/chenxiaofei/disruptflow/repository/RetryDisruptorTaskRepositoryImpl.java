@@ -2,10 +2,9 @@ package com.chenxiaofei.disruptflow.repository;
 
 import com.chenxiaofei.disruptflow.model.RetryDisruptorTask;
 import com.chenxiaofei.disruptflow.repository.mapper.RetryDisruptorTaskMapper;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
-
-import javax.annotation.Resource;
 import java.util.List;
 
 /**

@@ -1,5 +1,16 @@
 # DisruptFlow：高性能可靠异步任务编排引擎
 
+## 企业级落地文档
+
+- 技术方案：`/Users/chenxiaofei.ropz/Desktop/DisruptFlow/docs/TECHNICAL_SOLUTION_ENTERPRISE.md`
+- 企业级部署手册：`/Users/chenxiaofei.ropz/Desktop/DisruptFlow/docs/README_ENTERPRISE.md`
+- 企业级启动指南：`/Users/chenxiaofei.ropz/Desktop/DisruptFlow/docs/ENTERPRISE_STARTUP_GUIDE.md`
+- 部署资产（Docker/K8s）：`/Users/chenxiaofei.ropz/Desktop/DisruptFlow/deploy/README.md`
+- 企业级演进路线图：`/Users/chenxiaofei.ropz/Desktop/DisruptFlow/docs/ENTERPRISE_ROADMAP.md`
+- 运维Runbook：`/Users/chenxiaofei.ropz/Desktop/DisruptFlow/docs/OPS_RUNBOOK.md`
+
+> 生产环境建议使用 `prod` Profile，并参考 `application-prod.yml` 通过环境变量注入敏感配置。
+
 ###  项目定位
 
 **DisruptFlow** 是一款融合了 **LMAX Disruptor 无锁队列** 与 **本地消息表（Transactional Outbox）** 模式的异步任务框架。它专门解决分布式环境下，高并发链路中“异步化操作”与“数据最终一致性”难以兼得的痛点。
@@ -9,6 +20,7 @@
 ###  核心架构设计 (Architectural Design)
 ![整体架构图.png](src/main/resources/static/docs/%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84%E5%9B%BE.png)
 ![img.png](src/main/resources/static/docs/img.png)
+
 
 * **高性能内核：** 摒弃传统的 `BlockingQueue`，采用基于 **RingBuffer** 的无锁并发模型。通过 **CAS (Compare and Swap)** 操作及 **Cache Line Padding（消除伪共享）** 机制，彻底榨干单机 CPU 性能，实现微秒级调度。
 * **可靠性屏障：** * **本地消息表模式：** 业务逻辑与任务持久化共享同一个 DB 事务，确保“动作执行”与“任务记录”的**强原子性**。

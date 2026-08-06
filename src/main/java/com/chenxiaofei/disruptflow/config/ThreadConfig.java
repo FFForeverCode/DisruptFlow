@@ -1,58 +1,34 @@
 package com.chenxiaofei.disruptflow.config;
 
-import org.jspecify.annotations.NonNull;
-import org.springframework.beans.factory.annotation.Value;
+import com.chenxiaofei.disruptflow.config.properties.AsyncExecutorProperties;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- * @author chenxiaofei
- * @project DisruptFlow
- * @date 2026-02-16
- * @description:
+ * 异步线程池配置。
  */
 @Configuration
+@RequiredArgsConstructor
 public class ThreadConfig {
 
+    private final AsyncExecutorProperties asyncExecutorProperties;
 
-
-    @Value("${asyncPushDisruptorFlowExecutor.corePoolSize}")
-    private static int coreSize = 10;
-
-    @Value("${asyncPushDisruptorFlowExecutor.MaxPoolSize}")
-    private static int maxSize = 16;
-
-    @Value("${asyncPushDisruptorFlowExecutor.keepAliveTime}")
-    private static int keepAliveTime = 200;
-
-    @Value("${asyncPushDisruptorFlowExecutor.queueSize}")
-    private static int queueSize = 50;
-
-    private static RejectedExecutionHandler rejectedExecutionHandler = new ThreadPoolExecutor.CallerRunsPolicy();
     @Bean("asyncPushDisruptorFlowExecutor")
-    public ThreadPoolExecutor getAsyncPushDisruptorFlowExecutor(){
-        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
-                coreSize,
-                maxSize,
-                keepAliveTime,
-                TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(queueSize),
-                new ThreadFactory() {
-                    private final AtomicInteger seq = new AtomicInteger(0);
-                    @Override
-                    public Thread newThread(@NonNull Runnable r) {
-                        Thread thread = new Thread(r);
-                        thread.setName("asyncPushDisruptorFlowExecutor-thread-seq:{}"+seq.get());
-                        seq.incrementAndGet();
-                        return thread;
-                    }
-                },
-                rejectedExecutionHandler
-        );
-
-        return threadPoolExecutor;
+    public ThreadPoolTaskExecutor asyncPushDisruptorFlowExecutor() {
+        ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        taskExecutor.setCorePoolSize(asyncExecutorProperties.getCorePoolSize());
+        taskExecutor.setMaxPoolSize(asyncExecutorProperties.getMaxPoolSize());
+        taskExecutor.setKeepAliveSeconds(Math.max(1, asyncExecutorProperties.getKeepAliveTime() / 1000));
+        taskExecutor.setQueueCapacity(asyncExecutorProperties.getQueueSize());
+        taskExecutor.setThreadNamePrefix("async-push-disruptor-");
+        taskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        taskExecutor.setWaitForTasksToCompleteOnShutdown(true);
+        taskExecutor.setAwaitTerminationSeconds(30);
+        taskExecutor.initialize();
+        return taskExecutor;
     }
 }

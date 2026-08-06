@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: disruptflow-config
+  namespace: disruptflow
+  labels:
+    app: disruptflow
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  SERVER_PORT: "8080"
+  ASYNC_CORE_POOL_SIZE: "32"
+  ASYNC_MAX_POOL_SIZE: "64"
+  ASYNC_QUEUE_SIZE: "2000"
+  RETRY_FAILED_COUNT_LIMIT: "8"
+  RETRY_DISRUPTOR_BUFFER_SIZE: "4096"
+  RETRY_DISRUPTOR_WORKER_MULTIPLIER: "2"
