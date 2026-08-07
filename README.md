@@ -1,16 +1,5 @@
 # DisruptFlow：高性能可靠异步任务编排引擎
 
-## 企业级落地文档
-
-- 技术方案：`/Users/chenxiaofei.ropz/Desktop/DisruptFlow/docs/TECHNICAL_SOLUTION_ENTERPRISE.md`
-- 企业级部署手册：`/Users/chenxiaofei.ropz/Desktop/DisruptFlow/docs/README_ENTERPRISE.md`
-- 企业级启动指南：`/Users/chenxiaofei.ropz/Desktop/DisruptFlow/docs/ENTERPRISE_STARTUP_GUIDE.md`
-- 部署资产（Docker/K8s）：`/Users/chenxiaofei.ropz/Desktop/DisruptFlow/deploy/README.md`
-- 企业级演进路线图：`/Users/chenxiaofei.ropz/Desktop/DisruptFlow/docs/ENTERPRISE_ROADMAP.md`
-- 运维Runbook：`/Users/chenxiaofei.ropz/Desktop/DisruptFlow/docs/OPS_RUNBOOK.md`
-
-> 生产环境建议使用 `prod` Profile，并参考 `application-prod.yml` 通过环境变量注入敏感配置。
-
 ###  项目定位
 
 **DisruptFlow** 是一款融合了 **LMAX Disruptor 无锁队列** 与 **本地消息表（Transactional Outbox）** 模式的异步任务框架。它专门解决分布式环境下，高并发链路中“异步化操作”与“数据最终一致性”难以兼得的痛点。
